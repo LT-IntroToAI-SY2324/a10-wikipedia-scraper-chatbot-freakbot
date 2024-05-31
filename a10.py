@@ -35,6 +35,7 @@ def get_first_infobox_text(html: str) -> str:
 
     if not results:
         raise LookupError("Page has no infobox")
+    #print(results[0].text)
     return results[0].text
 
 
@@ -111,6 +112,60 @@ def get_birth_date(name: str) -> str:
 
     return match.group("birth")
 
+def get_weight(name: str) -> str:
+    """Gets weight of the given person
+
+    Args:
+        name - name of the person
+
+    Returns:
+        weight of the given person
+    """
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(name)))
+    pattern = r"(?:weight\D*)(?P<Weight>\d{3}\s\w{2}\s\W\d{2,3}\s\w{2})"
+    
+    error_text = (
+        "Page infobox has position information (at least none in xxxx-xx-xx format)"
+    )
+    match = get_match(infobox_text, pattern, error_text)
+
+    return match.group("Weight")
+
+def get_height(name: str) -> str:
+    """Gets birth date of the given person
+
+    Args:
+        name - name of the person
+
+    Returns:
+        birth date of the given person
+    """
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(name)))
+    pattern = r"(?:height\D*)(?P<Height>\d{1}\s\w{2}\s\d{1,2}\s\w{2})"
+    error_text = (
+        "Page infobox has no birth information (at least none in xxxx-xx-xx format)"
+    )
+    match = get_match(infobox_text, pattern, error_text)
+
+    return match.group("Height")
+
+def get_age(name: str) -> str:
+    """Gets birth date of the given person
+
+    Args:
+        name - name of the person
+
+    Returns:
+        birth date of the given person
+    """
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(name)))
+    pattern = r"(?:age\D*)(?P<Age>\d{2})"
+    error_text = (
+        "Page infobox has no birth information (at least none in xxxx-xx-xx format)"
+    )
+    match = get_match(infobox_text, pattern, error_text)
+
+    return match.group("Age")
 
 # below are a set of actions. Each takes a list argument and returns a list of answers
 # according to the action and the argument. It is important that each function returns a
@@ -140,6 +195,40 @@ def polar_radius(matches: List[str]) -> List[str]:
     """
     return [get_polar_radius(matches[0])]
 
+def weight(matches: List[str]) -> List[str]:
+    """Returns the weight of named person in matches
+
+    Args:
+        matches - match from pattern of person's name to find weight of
+
+    Returns:
+        weight of named person
+    """
+    return [get_weight(" ".join(matches))]
+
+
+def height(matches: List[str]) -> List[str]:
+    """Returns birth date of named person in matches
+
+    Args:
+        matches - match from pattern of person's name to find birth date of
+
+    Returns:
+        birth date of named person
+    """
+    return [get_height(" ".join(matches))]
+
+def age(matches: List[str]) -> List[str]:
+    """Returns birth date of named person in matches
+
+    Args:
+        matches - match from pattern of person's name to find birth date of
+
+    Returns:
+        birth date of named person
+    """
+    return [get_age(" ".join(matches))]
+
 
 # dummy argument is ignored and doesn't matter
 def bye_action(dummy: List[str]) -> None:
@@ -156,6 +245,9 @@ Action = Callable[[List[str]], List[Any]]
 pa_list: List[Tuple[Pattern, Action]] = [
     ("when was % born".split(), birth_date),
     ("what is the polar radius of %".split(), polar_radius),
+    ("how much does % weight".split(), weight),
+    ("how tall is %".split(), height),
+    ("how old is %".split(), age),
     (["bye"], bye_action),
 ]
 
@@ -184,7 +276,7 @@ def search_pa_list(src: List[str]) -> List[str]:
 def query_loop() -> None:
     """The simple query loop. The try/except structure is to catch Ctrl-C or Ctrl-D
     characters and exit gracefully"""
-    print("Welcome to the movie database!\n")
+    print("Welcome to the Wikipedia chatbot!\n")
     while True:
         try:
             print()
